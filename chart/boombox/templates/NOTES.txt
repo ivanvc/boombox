@@ -1,0 +1,49 @@
+If you want to expose the SSH service using an ingress:
+1. In your TCP services ConfigMap add Boombox's port:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx
+data:
+  {{ include "boombox.containerPort" . }}: "{{ .Release.Namespace }}/boombox:{{ include "boombox.containerPort" . }}"
+
+2. Modify the ingress controller Service, by adding the previous port
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+    - name: proxied-tcp-{{ include "boombox.containerPort" . }}
+      port: {{ include "boombox.containerPort" . }}
+      targetPort: {{ include "boombox.containerPort" . }}
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+
+3. Ensure that the ConfigMap is in the ingress controller deployment args
+
+args:
+  - /nginx-ingress-controller
+  - --tcp-services-configmap=ingress-nginx/tcp-services
+
+After that, you can ssh into the ingress controller's host on port 2828.
+
+These steps are described in this guide: https://kubernetes.github.io/ingress-nginx/user-guide/exposing-tcp-udp-services/.
