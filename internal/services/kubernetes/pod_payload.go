@@ -45,9 +45,9 @@ const (
 		echo 'Creating user home';
 		if [ ! -d /home/{{ .Username }} ]; then mkdir /home/{{ .Username }}; chown -R 10000:10000 /home/{{ .Username }}; fi;
 		if [ ! -d /home/linuxbrew ]; then
-		echo 'Copying homebrew installation...';
-		mv /opt/linuxbrew /home/linuxbrew;
-		chown -R 10000:10000 /home/linuxbrew;
+		  echo 'Copying homebrew installation...';
+		  mv /opt/linuxbrew /home/linuxbrew;
+		  chown -R 10000:10000 /home/linuxbrew;
 		fi;
 	`
 	initContainerPodScript = `
