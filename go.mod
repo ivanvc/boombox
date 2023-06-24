@@ -88,6 +88,6 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/charmbracelet/bubbletea v0.24.2 => github.com/ivanvc/bubbletea v0.0.0-20230608001803-18eff18d9537
+replace github.com/charmbracelet/bubbletea => github.com/ivanvc/bubbletea v0.0.0-20230608001803-18eff18d9537
 
-replace github.com/charmbracelet/bubbles v0.16.1 => github.com/ivanvc/bubbles v0.0.0-20230615171027-c57d8a40134c
+replace github.com/charmbracelet/bubbles => github.com/ivanvc/bubbles v0.0.0-20230615171027-c57d8a40134c
