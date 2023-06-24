@@ -1,5 +1,7 @@
 # Boombox
 
+<p><img src="https://ivan.vc/boombox/images/logo.png" alt="Boombox" title="Boombox" align="right" width="25%" style="padding-left: 10px"></p> 
+
 Boombox is a shell on-demand service that runs on Kubernetes. It listens on SSH
 and creates a Pod in the cluster where the terminal will be attached.
 
