@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  boombox:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2023-06-24T21:23:08.865057585Z"
+    description: Boombox is a shell-on-demand service.
+    digest: cb976d0a0f0e06a55085f8493518e65701c1ccb3c7a8517a5aa28bab470fd651
+    name: boombox
+    type: application
+    urls:
+    - https://github.com/ivanvc/boombox/releases/download/boombox-0.1.0/boombox-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-06-24T21:23:08.865070985Z"
