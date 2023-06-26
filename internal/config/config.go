@@ -15,7 +15,7 @@ type Config struct {
 	PVCSize        string
 }
 
-func LoadConfig() *Config {
+func Load() *Config {
 	c := new(Config)
 	flag.StringVar(&c.Listen, "listen", envOrDefault("BOOMBOX_LISTEN", ":2828"), "The address the server binds to.")
 	flag.StringVar(&c.HostKeyPath, "host-key-path", envOrDefault("BOOMBOX_HOST_KEY_PATH", ".ssh/boombox_ed25519"), "The host key path.")

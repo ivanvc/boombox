@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	cfg := config.LoadConfig()
+	cfg := config.Load()
 	log.SetLevel(log.ParseLevel(cfg.LogLevel))
 	client := k8s.LoadClient(cfg.Namespace)
 
