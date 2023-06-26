@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/log"
 	"k8s.io/client-go/tools/remotecommand"
 
-	"github.com/ivanvc/boombox/internal/config"
 	k8s "github.com/ivanvc/boombox/internal/services/kubernetes"
 	"github.com/ivanvc/boombox/internal/ui/actions"
 	"github.com/ivanvc/boombox/internal/ui/common"
@@ -85,14 +84,14 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, ui.common.Actions.FetchPVC(ui.common.User))
 		case state.CreatingPVC:
 			ui.createdPVC = true
-			cmds = append(cmds, ui.common.Actions.CreatePVC(ui.common.User, config.Values.PVCSize))
+			cmds = append(cmds, ui.common.Actions.CreatePVC(ui.common.User, ui.common.Config.PVCSize))
 		case state.WaitingForPVC:
 			cmds = append(cmds, ui.common.Actions.WaitForPVC(msg.PVC))
 		case state.CreatingPod:
 			if ui.createdPVC {
-				cmds = append(cmds, ui.common.Actions.CreateInitialPod(ui.common.User, config.Values.ContainerImage, msg.PVC))
+				cmds = append(cmds, ui.common.Actions.CreateInitialPod(ui.common.User, ui.common.Config.ContainerImage, msg.PVC))
 			} else {
-				cmds = append(cmds, ui.common.Actions.CreatePod(ui.common.User, config.Values.ContainerImage, msg.PVC))
+				cmds = append(cmds, ui.common.Actions.CreatePod(ui.common.User, ui.common.Config.ContainerImage, msg.PVC))
 			}
 		case state.WaitingForPod:
 			cmds = append(cmds, ui.common.Actions.WaitForPodInitContainer(msg.Pod))

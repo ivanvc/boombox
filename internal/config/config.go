@@ -5,8 +5,6 @@ import (
 	"os"
 )
 
-var Values *Config
-
 type Config struct {
 	Listen      string
 	HostKeyPath string
@@ -26,7 +24,6 @@ func LoadConfig() *Config {
 	flag.StringVar(&c.PVCSize, "pvc-size", envOrDefault("BOOMBOX_PVC_SIZE", "10Gi"), "The size for the user PVC with units (default: 10Gi).")
 	flag.StringVar(&c.LogLevel, "log-level", envOrDefault("BOOMBOX_LOG_LEVEL", "info"), "The log level. (default: INFO).")
 
-	Values = c
 	return c
 }
 
