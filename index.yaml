@@ -9,6 +9,6 @@ entries:
     name: boombox
     type: application
     urls:
-    - https://github.com/ivanvc/boombox/releases/download/boombox-0.1.0/boombox-0.1.0.tgz
+    - https://github.com/ivanvc/boombox/releases/download/0.1.0/boombox-0.1.0.tgz
     version: 0.1.0
 generated: "2023-06-24T21:23:08.865070985Z"
