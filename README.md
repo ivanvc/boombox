@@ -1,6 +1,6 @@
 # Boombox
 
-<p><img src="https://ivan.vc/boombox/images/logo.png" alt="Boombox" title="Boombox" align="right" width="25%" style="padding-left: 10px"></p> 
+<p><img src="https://ivan.vc/boombox/images/logo.png" alt="Boombox" title="Boombox" align="right" width="25%" style="padding-left: 10px"></p>
 
 Boombox is a shell on-demand service that runs on Kubernetes. It listens on SSH
 and creates a Pod in the cluster where the terminal will be attached.
@@ -41,6 +41,11 @@ exposed in the Helm chart.
 * `container-image`: The image for the Pod container (default: `ubuntu`)
 * `pvc-size`: The size for the PVC that is mounted at `/home` (default: `10Gi`)
 * `log-level`: The log level (default: `INFO`)
+
+#### Setting the user shell
+
+To set the user shell, create a file `~/.boombox_shell` with the content of the
+shell to execute (i.e., `/bin/bash` or `/home/linuxbrew/.linuxbrew/bin/zsh`).
 
 ### Expose with an ingress
 
