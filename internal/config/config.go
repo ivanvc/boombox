@@ -23,6 +23,7 @@ func Load() *Config {
 	flag.StringVar(&c.ContainerImage, "container-image", envOrDefault("BOOMBOX_CONTAINER_IMAGE", "ubuntu"), "The Docker image to use in the container (default: ubuntu).")
 	flag.StringVar(&c.PVCSize, "pvc-size", envOrDefault("BOOMBOX_PVC_SIZE", "10Gi"), "The size for the user PVC with units (default: 10Gi).")
 	flag.StringVar(&c.LogLevel, "log-level", envOrDefault("BOOMBOX_LOG_LEVEL", "info"), "The log level. (default: INFO).")
+	flag.Parse()
 
 	return c
 }
