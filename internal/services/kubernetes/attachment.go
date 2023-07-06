@@ -72,6 +72,7 @@ func (a *Attachment) Run() error {
 	// Use stdout as stderr, because Bubble Tea assigns os.Stderr when calling
 	// ExecCommand.SetStderr(io.Writer), which would then show the stderr output
 	// on the server's screen rather than the client's.
+	a.stdout.Write([]byte("If you don't see a command prompt, try pressing enter.\n"))
 	err = exec.Stream(remotecommand.StreamOptions{
 		Stdin:             a.stdin,
 		Stdout:            a.stdout,
