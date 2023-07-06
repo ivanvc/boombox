@@ -12,21 +12,12 @@ import (
 )
 
 var (
-	containerEnvVars = []corev1.EnvVar{
-		{
-			Name:  "HOMEBREW_FORCE_BREWED_CURL",
-			Value: "1",
-		},
-		{
-			Name:  "HOMEBREW_CURL_PATH",
-			Value: "/home/linuxbrew/.linuxbrew/bin/curl",
-		},
-		{
-			Name:  "LANG",
-			Value: "en_US.UTF-8",
-		},
-	}
 	containerVolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      "docker-sock",
+			MountPath: fmt.Sprintf("/var/run/user/%s/docker", uid),
+			ReadOnly:  true,
+		},
 		{
 			Name:      "home",
 			MountPath: "/home",
@@ -41,27 +32,38 @@ var (
 )
 
 const (
+	uid                           = "10000"
 	initialInitContainerPodScript = `
 		echo 'Creating user home';
-		if [ ! -d /home/{{ .Username }} ]; then mkdir /home/{{ .Username }}; chown -R 10000:10000 /home/{{ .Username }}; fi;
+		if [ ! -d /home/{{ .Username }} ]; then
+			mkdir /home/{{ .Username }};
+			chown -R {{ .UID }}:{{ .UID }} /home/{{ .Username }};
+		fi;
 		if [ ! -d /home/linuxbrew ]; then
 		  echo 'Copying homebrew installation...';
 		  mv /opt/linuxbrew /home/linuxbrew;
-		  chown -R 10000:10000 /home/linuxbrew;
+		  chown -R {{ .UID }}:{{ .UID }} /home/linuxbrew;
 		fi;
 	`
 	initContainerPodScript = `
-		if [ ! -d /home/{{ .Username }} ]; then mkdir /home/{{ .Username }}; chown -R 10000:10000 /home/{{ .Username }}; fi;
+		if [ ! -d /home/{{ .Username }} ]; then
+			mkdir /home/{{ .Username }};
+			chown -R {{ .UID }}:{{ .UID }} /home/{{ .Username }};
+		fi;
 		if [ ! -d /home/linuxbrew ]; then
 			apt-get update; apt-get install -y curl git;
 			NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)";
 			/home/linuxbrew/.linuxbrew/bin/brew install curl git man-db
-			chown -R 10000:10000 /home/linuxbrew;
+			chown -R {{ .UID }}:{{ .UID }} /home/linuxbrew;
 		fi;
 	`
 	containerScript = `
-		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; export PATH=/home/linuxbrew/.linuxbrew/opt/man-db/libexec/bin:$PATH' > /etc/profile.d/99-linuxbrew.sh;
-		useradd -d /home/{{ .Username }} -M {{ .Username }} -u 10000 -s "$([ -f /home/{{ .Username }}/.boombox_shell ] && cat /home/{{ .Username }}/.boombox_shell || echo /bin/bash)";
+		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; export PATH=/home/linuxbrew/.linuxbrew/opt/man-db/libexec/bin:$PATH; export HOMEBREW_FORCE_BREWED_CURL=1; export HOMEBREW_CURL_PATH=/home/linuxbrew/.linuxbrew/bin/curl' > /etc/profile.d/99-linuxbrew.sh;
+		echo 'export LANG=en_US.UTF-8' > /etc/profile.d/99-set-lang.sh;
+		echo 'export DOCKER_HOST=unix:///var/run/user/{{ .UID }}/docker/docker.sock' > /etc/profile.d/99-set-docker-host.sh;
+		groupadd -g 1000 docker;
+		useradd -d /home/{{ .Username }} -M {{ .Username }} -u {{ .UID }} -s "$([ -f /home/{{ .Username }}/.boombox_shell ] && cat /home/{{ .Username }}/.boombox_shell || echo /bin/bash)" -G docker;
+		touch /tmp/ready;
 		tail -f /dev/null;
 	`
 )
@@ -87,7 +89,7 @@ func init() {
 
 func getInitialPodPayload(namespace, name, image string, pvc *corev1.PersistentVolumeClaim) *corev1.Pod {
 	var tmpl bytes.Buffer
-	if err := initialInitContainerPodTemplate.Execute(&tmpl, map[string]string{"Username": name}); err != nil {
+	if err := initialInitContainerPodTemplate.Execute(&tmpl, map[string]string{"Username": name, "UID": uid}); err != nil {
 		log.Error("Error executing initial pod init container template", "error", err)
 		return nil
 	}
@@ -109,17 +111,8 @@ func getInitialPodPayload(namespace, name, image string, pvc *corev1.PersistentV
 					VolumeMounts:    containerVolumeMounts,
 				},
 			},
-			Containers: []corev1.Container{getContainerPayload(name, image)},
-			Volumes: []corev1.Volume{
-				{
-					Name: "home",
-					VolumeSource: corev1.VolumeSource{
-						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: pvc.ObjectMeta.Name,
-						},
-					},
-				},
-			},
+			Containers: getContainersPayload(name, image),
+			Volumes:    getVolumesPayload(pvc),
 		},
 	}
 
@@ -127,7 +120,7 @@ func getInitialPodPayload(namespace, name, image string, pvc *corev1.PersistentV
 
 func getPodPayload(namespace, name, image string, pvc *corev1.PersistentVolumeClaim) *corev1.Pod {
 	var tmpl bytes.Buffer
-	if err := initContainerPodTemplate.Execute(&tmpl, map[string]string{"Username": name}); err != nil {
+	if err := initContainerPodTemplate.Execute(&tmpl, map[string]string{"Username": name, "UID": uid}); err != nil {
 		log.Error("Error executing pod init container template", "error", err)
 		return nil
 	}
@@ -149,35 +142,70 @@ func getPodPayload(namespace, name, image string, pvc *corev1.PersistentVolumeCl
 					VolumeMounts:    containerVolumeMounts,
 				},
 			},
-			Containers: []corev1.Container{getContainerPayload(name, image)},
-			Volumes: []corev1.Volume{
-				{
-					Name: "home",
-					VolumeSource: corev1.VolumeSource{
-						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: pvc.ObjectMeta.Name,
-						},
+			Containers: getContainersPayload(name, image),
+			Volumes:    getVolumesPayload(pvc),
+		},
+	}
+}
+
+func getContainersPayload(name, image string) []corev1.Container {
+	var tmpl bytes.Buffer
+	if err := containerTemplate.Execute(&tmpl, map[string]string{"Username": name, "UID": uid}); err != nil {
+		log.Error("Error executing pod init container template", "error", err)
+		return []corev1.Container{}
+	}
+	truePtr := true
+
+	return []corev1.Container{
+		{
+			Name:         image,
+			Image:        image,
+			Stdin:        true,
+			TTY:          true,
+			Args:         []string{"/bin/sh", "-c", tmpl.String()},
+			VolumeMounts: containerVolumeMounts,
+			ReadinessProbe: &corev1.Probe{
+				TimeoutSeconds:   1,
+				FailureThreshold: 60,
+				ProbeHandler: corev1.ProbeHandler{
+					Exec: &corev1.ExecAction{
+						Command: []string{"cat", "/tmp/ready"},
 					},
+				},
+			},
+		}, {
+			Name:  "dind",
+			Image: "docker:dind-rootless",
+			SecurityContext: &corev1.SecurityContext{
+				Privileged: &truePtr,
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "docker-sock",
+					MountPath: "/var/run/user/1000",
 				},
 			},
 		},
 	}
 }
 
-func getContainerPayload(name, image string) corev1.Container {
-	var tmpl bytes.Buffer
-	if err := containerTemplate.Execute(&tmpl, map[string]string{"Username": name}); err != nil {
-		log.Error("Error executing pod init container template", "error", err)
-		return corev1.Container{}
-	}
-
-	return corev1.Container{
-		Name:         image,
-		Image:        image,
-		Stdin:        true,
-		TTY:          true,
-		Args:         []string{"/bin/sh", "-c", tmpl.String()},
-		Env:          containerEnvVars,
-		VolumeMounts: containerVolumeMounts,
+func getVolumesPayload(pvc *corev1.PersistentVolumeClaim) []corev1.Volume {
+	return []corev1.Volume{
+		{
+			Name: "home",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvc.Name,
+				},
+			},
+		},
+		{
+			Name: "docker-sock",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{
+					Medium: corev1.StorageMediumMemory,
+				},
+			},
+		},
 	}
 }
