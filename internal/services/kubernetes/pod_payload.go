@@ -136,7 +136,7 @@ func getPodPayload(namespace, name, image string, pvc *corev1.PersistentVolumeCl
 			InitContainers: []corev1.Container{
 				{
 					Name:            "init",
-					Image:           image,
+					Image:           fmt.Sprintf("ivan/boombox-box:%s", image),
 					ImagePullPolicy: corev1.PullAlways,
 					Args:            []string{"/bin/sh", "-c", tmpl.String()},
 					VolumeMounts:    containerVolumeMounts,
@@ -159,7 +159,7 @@ func getContainersPayload(name, image string) []corev1.Container {
 	return []corev1.Container{
 		{
 			Name:         image,
-			Image:        image,
+			Image:        fmt.Sprintf("ivan/boombox-box:%s", image),
 			Stdin:        true,
 			TTY:          true,
 			Args:         []string{"/bin/sh", "-c", tmpl.String()},
