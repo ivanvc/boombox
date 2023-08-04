@@ -58,7 +58,8 @@ const (
 		fi;
 	`
 	containerScript = `
-		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; export PATH=/home/linuxbrew/.linuxbrew/opt/man-db/libexec/bin:$PATH; export HOMEBREW_FORCE_BREWED_CURL=1; export HOMEBREW_CURL_PATH=/home/linuxbrew/.linuxbrew/bin/curl' > /etc/profile.d/99-linuxbrew.sh;
+		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; export PATH=/home/linuxbrew/.linuxbrew/opt/man-db/libexec/bin:/home/linuxbrew/.linuxbrew/opt/glibc/bin:/home/linuxbrew/.linuxbrew/opt/glibc/sbin:/home/linuxbrew/.linuxbrew/opt/binutils/bin:$PATH; export HOMEBREW_FORCE_BREWED_CURL=1; export HOMEBREW_CURL_PATH=/home/linuxbrew/.linuxbrew/bin/curl; export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/glibc/lib"; export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/glibc/include"; export CPATH="/home/linuxbrew/.linuxbrew/opt/glibc/include:/home/linuxbrew/.linuxbrew/opt/linux-headers/include"; LIBRARY_PATH="/home/linuxbrew/.linuxbrew/opt/glibc/lib"' > /etc/profile.d/99-linuxbrew.sh;
+		echo 'ulimit -n 4096' > /etc/profile.d/99-update-open-file-limit.sh;
 		echo 'export LANG=en_US.UTF-8' > /etc/profile.d/99-set-lang.sh;
 		echo 'export DOCKER_HOST=unix:///var/run/user/{{ .UID }}/docker/docker.sock' > /etc/profile.d/99-set-docker-host.sh;
 		groupadd -g 1000 docker;
